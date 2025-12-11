@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Number Masking Settings</title>
+  <style>
+    /* Apply a polished look similar to Chrome's native popups */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: #fff;
+      color: #202124;
+      margin: 0;
+      padding: 12px;
+      width: 280px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    #site-container {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      margin: 8px 0;
+      cursor: pointer;
+    }
+    input[type="checkbox"] {
+      margin-right: 8px;
+      width: 16px;
+      height: 16px;
+    }
+    #note {
+      font-size: 12px;
+      color: #5f6368;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="site-container" style="margin-bottom: 6px; font-size: 0.9em;">
+    Site: <span id="site">current</span>
+  </div>
+  <label>
+    <input type="checkbox" id="enabled" />
+    Enable masking
+  </label>
+  <label>
+    <input type="checkbox" id="hideMagnitude" />
+    Hide magnitude (use •••)
+  </label>
+  <div id="note">Changes apply to newly loaded or updated content. Refresh pages to fully apply.</div>
+  <script src="popup.js"></script>
+</body>
+</html>
