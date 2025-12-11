@@ -4,8 +4,6 @@
   "version": "1.0.67",
   "description": "Hide numbers on any website.",
   "permissions": [
-    "scripting",
-    "activeTab",
     "storage",
     "tabs"
   ],
