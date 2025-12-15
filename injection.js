@@ -5,15 +5,13 @@
  * element that loaded it. The configuration object can contain:
  *   - enabled (boolean): if false, no transformation occurs.
  *   - hideMagnitude (boolean): if true, all numeric expressions are
- *     replaced with a fixed number of X's (three) regardless of
- *     length or suffix.
- *   - uppercase (boolean): when true, replacement characters are
- *     uppercase 'X'; otherwise they are lowercase 'x'.
+ *     replaced with exactly three bullet characters (•••) regardless
+ *     of length or suffix.
  * The replacement logic handles plain digits, numbers with decimal
  * points or commas, optional magnitude suffixes (K, M, B, T, Bn, Tn)
- * and spelled‑out numbers. Date patterns such as "Nov 22, 2025",
- * "11/22", "11/22/25", "2025" and "Day 13" are detected and left
- * untouched.
+ * and spelled‑out numbers. Date and time patterns such as "Nov 22, 2025",
+ * "11/22", "2025-12-15", "15.12.2025", "10:30 AM" and "Day 13" are
+ * detected and left untouched.
  */
 
 (() => {
@@ -66,9 +64,19 @@
   // slashes, four‑digit years and "Day XX" style strings. These
   // patterns are case insensitive.
   const datePatterns = [
+    // Month name followed by day and optional year: "Nov 22, 2025", "January 5"
     /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s*\d{2,4})?/gi,
+    // US date format: "11/22", "11/22/2025", "11/22/25"
     /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g,
-    /\b\d{4}\b/g,
+    // ISO date format: "2025-12-15", "2025-12"
+    /\b(19|20)\d{2}-\d{1,2}(?:-\d{1,2})?\b/g,
+    // European date format: "15.12.2025", "15.12.25"
+    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/g,
+    // Standalone years (restricted to 1900-2099 to avoid false positives)
+    /\b(19|20)\d{2}\b/g,
+    // Time formats: "10:30", "10:30:45", "10:30 AM"
+    /\b\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\b/g,
+    // "Day X" format: "Day 13"
     /\bDay\s+\d{1,2}\b/gi
   ];
 
@@ -82,6 +90,7 @@
   function findDateRanges(text) {
     const ranges = [];
     datePatterns.forEach(re => {
+      re.lastIndex = 0;  // Reset to avoid state pollution from previous calls
       let match;
       while ((match = re.exec(text)) !== null) {
         ranges.push({ start: match.index, end: match.index + match[0].length });
@@ -108,10 +117,9 @@
 
   /**
    * Transform a string by replacing numeric values and spelled‑out
-   * numbers with X's. Date substrings are preserved. If hideMagnitude
-   * is true, all numeric expressions are replaced by exactly three
-   * X's. Replacement characters are uppercase or lowercase depending
-   * on the config.
+   * numbers with bullet characters (•). Date and time substrings are
+   * preserved. If hideMagnitude is true, all numeric expressions are
+   * replaced by exactly three bullets (•••).
    *
    * @param {string} text The original string
    * @returns {string} The transformed string

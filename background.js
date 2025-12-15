@@ -2,6 +2,7 @@
 // settings. When a tab is updated, activated or when siteConfigs
 // change, it retrieves the configuration for the tab's domain and
 // updates the extension's icon and badge accordingly.
+// Also handles keyboard shortcuts for toggling masking on/off.
 
 const ICONS = {
   on: {
@@ -20,6 +21,7 @@ const ICONS = {
 
 /**
  * Update the toolbar icon and badge for a given tab based on its domain.
+ * Takes into account both site-specific and global enabled state.
  * @param {Object} tab Chrome tab object
  */
 function updateTabIcon(tab) {
@@ -31,14 +33,21 @@ function updateTabIcon(tab) {
   } catch (e) {
     return;
   }
-  chrome.storage.local.get({ siteConfigs: {} }, result => {
+  chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
     const siteConfigs = result.siteConfigs || {};
     const siteConfig = siteConfigs[domain] || {};
-    const enabled = siteConfig.enabled === true;
+    const globalEnabled = result.globalEnabled !== false;
+    // Only show as enabled if both global and site-specific are enabled
+    const enabled = globalEnabled && siteConfig.enabled === true;
     const icons = enabled ? ICONS.on : ICONS.off;
     chrome.action.setIcon({ tabId: tab.id, path: icons });
-    // No badge is shown; the color vs grayscale icon indicates state
-    chrome.action.setBadgeText({ tabId: tab.id, text: '' });
+    // Show "OFF" badge when globally disabled to distinguish from site-disabled
+    if (!globalEnabled) {
+      chrome.action.setBadgeText({ tabId: tab.id, text: 'OFF' });
+      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#666' });
+    } else {
+      chrome.action.setBadgeText({ tabId: tab.id, text: '' });
+    }
   });
 }
 
@@ -63,11 +72,80 @@ chrome.tabs.onActivated.addListener(activeInfo => {
   });
 });
 
-// Update icons when site configurations change
+// Update icons when site configurations or global settings change
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && changes.siteConfigs) {
+  if (areaName === 'local' && (changes.siteConfigs || changes.globalEnabled)) {
     chrome.tabs.query({}, tabs => {
       tabs.forEach(updateTabIcon);
     });
+  }
+});
+
+/**
+ * Toggle masking for a specific domain and notify all tabs.
+ * @param {string} domain The domain to toggle
+ */
+function toggleSiteMasking(domain) {
+  chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
+    const siteConfigs = result.siteConfigs || {};
+    const currentConfig = siteConfigs[domain] || { enabled: false, hideMagnitude: false };
+    currentConfig.enabled = !currentConfig.enabled;
+    siteConfigs[domain] = currentConfig;
+    chrome.storage.local.set({ siteConfigs }, () => {
+      // Notify all tabs of this domain to reload config
+      chrome.tabs.query({}, tabs => {
+        for (const tab of tabs) {
+          try {
+            const tabUrl = new URL(tab.url);
+            if (tabUrl.hostname === domain) {
+              chrome.tabs.sendMessage(tab.id, { type: 'config-update' }, () => {
+                void chrome.runtime.lastError;
+              });
+            }
+          } catch (e) {
+            // skip invalid urls
+          }
+        }
+      });
+    });
+  });
+}
+
+/**
+ * Toggle the global enabled state. When disabled globally, no sites
+ * will have masking applied regardless of per-site settings.
+ */
+function toggleGlobalEnabled() {
+  chrome.storage.local.get({ globalEnabled: true }, result => {
+    const newState = !result.globalEnabled;
+    chrome.storage.local.set({ globalEnabled: newState }, () => {
+      // Notify all tabs to reload config
+      chrome.tabs.query({}, tabs => {
+        for (const tab of tabs) {
+          chrome.tabs.sendMessage(tab.id, { type: 'config-update' }, () => {
+            void chrome.runtime.lastError;
+          });
+        }
+      });
+    });
+  });
+}
+
+// Handle keyboard shortcuts
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'toggle-masking') {
+    // Toggle masking for the current active tab's domain
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      const tab = tabs[0];
+      if (!tab || !tab.url) return;
+      try {
+        const url = new URL(tab.url);
+        toggleSiteMasking(url.hostname);
+      } catch (e) {
+        // Invalid URL
+      }
+    });
+  } else if (command === 'toggle-global') {
+    toggleGlobalEnabled();
   }
 });

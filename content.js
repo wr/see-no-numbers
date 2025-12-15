@@ -39,9 +39,19 @@
   const numberWithSuffixRegex = /\d+(?:[.,]\d+)*(?:\s*(?:[kKmMbBtT](?:n)?\b))?/g;
   const wordRegex = new RegExp(`\\b(${numberWords.join('|')})\\b`, 'gi');
   const datePatterns = [
+    // Month name followed by day and optional year: "Nov 22, 2025", "January 5"
     /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2}(?:,\s*\d{2,4})?/gi,
+    // US date format: "11/22", "11/22/2025", "11/22/25"
     /\b\d{1,2}\/\d{1,2}(?:\/\d{2,4})?\b/g,
-    /\b\d{4}\b/g,
+    // ISO date format: "2025-12-15", "2025-12"
+    /\b(19|20)\d{2}-\d{1,2}(?:-\d{1,2})?\b/g,
+    // European date format: "15.12.2025", "15.12.25"
+    /\b\d{1,2}\.\d{1,2}\.\d{2,4}\b/g,
+    // Standalone years (restricted to 1900-2099 to avoid false positives)
+    /\b(19|20)\d{2}\b/g,
+    // Time formats: "10:30", "10:30:45", "10:30 AM"
+    /\b\d{1,2}:\d{2}(?::\d{2})?(?:\s*[AaPp][Mm])?\b/g,
+    // "Day X" format: "Day 13"
     /\bDay\s+\d{1,2}\b/gi
   ];
 
@@ -53,6 +63,7 @@
   function findDateRanges(text) {
     const ranges = [];
     datePatterns.forEach(re => {
+      re.lastIndex = 0;  // Reset to avoid state pollution from previous calls
       let match;
       while ((match = re.exec(text)) !== null) {
         ranges.push({ start: match.index, end: match.index + match[0].length });
@@ -199,15 +210,17 @@
   /**
    * Load configuration from chrome.storage and then apply processing and
    * injection. If storage retrieval fails, defaults are used.
+   * Respects both site-specific and global enabled state.
    */
   function initialize() {
     const hostname = window.location.hostname;
-    chrome.storage.local.get({ siteConfigs: {} }, result => {
+    chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
       const siteConfigs = result.siteConfigs || {};
       const siteConfig = siteConfigs[hostname] || {};
       const config = Object.assign({}, defaultConfig, siteConfig);
-      // If disabled for this site, do nothing.
-      if (!config.enabled) {
+      const globalEnabled = result.globalEnabled !== false;
+      // If disabled globally or for this site, do nothing.
+      if (!globalEnabled || !config.enabled) {
         return;
       }
       // Process existing text

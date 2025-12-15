@@ -1,12 +1,28 @@
 {
   "manifest_version": 3,
   "name": "See No Numbers",
-  "version": "1.0.67",
+  "version": "1.0.68",
   "description": "Hide numbers on any website.",
   "permissions": [
     "storage",
     "tabs"
   ],
+  "commands": {
+    "toggle-masking": {
+      "suggested_key": {
+        "default": "Alt+Shift+N",
+        "mac": "Alt+Shift+N"
+      },
+      "description": "Toggle number masking for current site"
+    },
+    "toggle-global": {
+      "suggested_key": {
+        "default": "Alt+Shift+G",
+        "mac": "Alt+Shift+G"
+      },
+      "description": "Toggle global enable/disable"
+    }
+  },
   "host_permissions": [
     "<all_urls>"
   ],
