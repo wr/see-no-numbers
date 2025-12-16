@@ -36,7 +36,7 @@ Hide numbers on any website. A Chrome extension for people who want to avoid see
 
 ## Install
 
-[Chrome Web Store](https://chromewebstore.google.com/detail/see-no-numbers/fdilkpeadfomoipnkbfadopdcjdjgjdm) · [Releases](https://github.com/wr/see-no-numbers/releases)
+[Chrome Web Store](https://chromewebstore.google.com/detail/see-no-numbers/coghcljioklijloigpjhondeiehgicec) · [Releases](https://github.com/wr/see-no-numbers/releases)
 
 ## License
 
