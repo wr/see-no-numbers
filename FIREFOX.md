@@ -31,7 +31,7 @@ Produces `dist/see-no-numbers-chrome-v<version>.zip` and
 1. Go to https://addons.mozilla.org/developers/ and sign in (or create a free
    Mozilla account)
 2. Click "Submit a New Add-on" → "On this site" (listed)
-3. Upload `dist/see-no-numbers-firefox-v1.0.68.zip`
+3. Upload `dist/see-no-numbers-firefox-v1.0.69.zip`
 4. When asked about source code, answer **No** — the zip contains plain,
    unminified source
 5. Fill the listing (copy below)
@@ -50,8 +50,8 @@ Produces `dist/see-no-numbers-chrome-v<version>.zip` and
   bullet characters. Dates, times, and years are detected and left alone. An
   optional "hide magnitude" mode replaces every number with exactly three
   bullets so lengths give nothing away. Numbers drawn into canvas charts are
-  masked too. Alt+Shift+G toggles the whole extension. All settings are stored
-  locally; the extension collects no data and talks to no servers.
+  masked too. All settings are stored locally; the extension collects no data
+  and talks to no servers.
 - **Categories:** Privacy & Security (or Other)
 - **License:** GPL-3.0 (matches the LICENSE file)
 - **Privacy policy:** paste the contents of PRIVACY.md

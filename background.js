@@ -33,21 +33,12 @@ function updateTabIcon(tab) {
   } catch (e) {
     return;
   }
-  chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
+  chrome.storage.local.get({ siteConfigs: {} }, result => {
     const siteConfigs = result.siteConfigs || {};
     const siteConfig = siteConfigs[domain] || {};
-    const globalEnabled = result.globalEnabled !== false;
-    // Only show as enabled if both global and site-specific are enabled
-    const enabled = globalEnabled && siteConfig.enabled === true;
+    const enabled = siteConfig.enabled === true;
     const icons = enabled ? ICONS.on : ICONS.off;
     chrome.action.setIcon({ tabId: tab.id, path: icons });
-    // Show "OFF" badge when globally disabled to distinguish from site-disabled
-    if (!globalEnabled) {
-      chrome.action.setBadgeText({ tabId: tab.id, text: 'OFF' });
-      chrome.action.setBadgeBackgroundColor({ tabId: tab.id, color: '#666' });
-    } else {
-      chrome.action.setBadgeText({ tabId: tab.id, text: '' });
-    }
   });
 }
 
@@ -72,9 +63,9 @@ chrome.tabs.onActivated.addListener(activeInfo => {
   });
 });
 
-// Update icons when site configurations or global settings change
+// Update icons when site configurations change
 chrome.storage.onChanged.addListener((changes, areaName) => {
-  if (areaName === 'local' && (changes.siteConfigs || changes.globalEnabled)) {
+  if (areaName === 'local' && changes.siteConfigs) {
     chrome.tabs.query({}, tabs => {
       tabs.forEach(updateTabIcon);
     });
@@ -86,7 +77,7 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
  * @param {string} domain The domain to toggle
  */
 function toggleSiteMasking(domain) {
-  chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
+  chrome.storage.local.get({ siteConfigs: {} }, result => {
     const siteConfigs = result.siteConfigs || {};
     const currentConfig = siteConfigs[domain] || { enabled: false, hideMagnitude: false };
     currentConfig.enabled = !currentConfig.enabled;
@@ -111,26 +102,6 @@ function toggleSiteMasking(domain) {
   });
 }
 
-/**
- * Toggle the global enabled state. When disabled globally, no sites
- * will have masking applied regardless of per-site settings.
- */
-function toggleGlobalEnabled() {
-  chrome.storage.local.get({ globalEnabled: true }, result => {
-    const newState = !result.globalEnabled;
-    chrome.storage.local.set({ globalEnabled: newState }, () => {
-      // Notify all tabs to reload config
-      chrome.tabs.query({}, tabs => {
-        for (const tab of tabs) {
-          chrome.tabs.sendMessage(tab.id, { type: 'config-update' }, () => {
-            void chrome.runtime.lastError;
-          });
-        }
-      });
-    });
-  });
-}
-
 // Handle keyboard shortcuts
 chrome.commands.onCommand.addListener((command) => {
   if (command === 'toggle-masking') {
@@ -145,7 +116,5 @@ chrome.commands.onCommand.addListener((command) => {
         // Invalid URL
       }
     });
-  } else if (command === 'toggle-global') {
-    toggleGlobalEnabled();
   }
 });

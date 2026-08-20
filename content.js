@@ -214,13 +214,12 @@
    */
   function initialize() {
     const hostname = window.location.hostname;
-    chrome.storage.local.get({ siteConfigs: {}, globalEnabled: true }, result => {
+    chrome.storage.local.get({ siteConfigs: {} }, result => {
       const siteConfigs = result.siteConfigs || {};
       const siteConfig = siteConfigs[hostname] || {};
       const config = Object.assign({}, defaultConfig, siteConfig);
-      const globalEnabled = result.globalEnabled !== false;
-      // If disabled globally or for this site, do nothing.
-      if (!globalEnabled || !config.enabled) {
+      // If disabled for this site, do nothing.
+      if (!config.enabled) {
         return;
       }
       // Process existing text

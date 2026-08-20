@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "See No Numbers",
-  "version": "1.0.68",
+  "version": "1.0.69",
   "description": "Hide numbers on any website.",
   "browser_specific_settings": {
     "gecko": {
@@ -26,13 +26,6 @@
         "mac": "Alt+Shift+N"
       },
       "description": "Toggle number masking for current site"
-    },
-    "toggle-global": {
-      "suggested_key": {
-        "default": "Alt+Shift+G",
-        "mac": "Alt+Shift+G"
-      },
-      "description": "Toggle global enable/disable"
     }
   },
   "host_permissions": [
